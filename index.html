@@ -765,6 +765,7 @@
         let allData = [];
         let quizData = [];
         let pendingPrintData = [];
+        let modalListenersAttached = false;
         
         let state = {
             screen: 'loading',
@@ -875,7 +876,13 @@
         // RENDERING
         // =====================================================
         
+        let currentController = null;
+
         function render() {
+            if (currentController) currentController.abort();
+            currentController = new AbortController();
+            const signal = currentController.signal;
+
             const app = document.getElementById('app');
             switch (state.screen) {
                 case 'loading': app.innerHTML = renderLoading(); break;
@@ -883,7 +890,7 @@
                 case 'quiz': app.innerHTML = renderQuiz(); break;
                 case 'results': app.innerHTML = renderResults(); break;
             }
-            attachEventListeners();
+            attachEventListeners(signal);
         }
         
         function renderLoading() {
@@ -1151,18 +1158,19 @@
         // EVENT LISTENERS
         // =====================================================
         
-        function attachEventListeners() {
+        function attachEventListeners(signal) {
+            const opt = { signal };
             document.querySelectorAll('[data-domi-filter]').forEach(btn => {
-                btn.addEventListener('click', () => { state.selectedDomiFilter = btn.dataset.domiFilter; render(); });
+                btn.addEventListener('click', () => { state.selectedDomiFilter = btn.dataset.domiFilter; render(); }, opt);
             });
             document.querySelectorAll('[data-tropos-filter]').forEach(btn => {
-                btn.addEventListener('click', () => { state.selectedTroposFilter = btn.dataset.troposFilter; render(); });
+                btn.addEventListener('click', () => { state.selectedTroposFilter = btn.dataset.troposFilter; render(); }, opt);
             });
             document.querySelectorAll('[data-count]').forEach(btn => {
-                btn.addEventListener('click', () => { state.selectedCount = parseInt(btn.dataset.count); render(); });
+                btn.addEventListener('click', () => { state.selectedCount = parseInt(btn.dataset.count); render(); }, opt);
             });
             document.querySelectorAll('[data-difficulty]').forEach(btn => {
-                btn.addEventListener('click', () => { state.selectedDifficulty = btn.dataset.difficulty; render(); });
+                btn.addEventListener('click', () => { state.selectedDifficulty = btn.dataset.difficulty; render(); }, opt);
             });
             
             const startBtn = document.getElementById('startBtn');
@@ -1177,7 +1185,7 @@
                     state.showResult = false;
                     state.score = { domi: 0, tropiKyrios: 0, tropiDeytereyon: 0 };
                     render();
-                });
+                }, opt);
             }
             
             const printBtn = document.getElementById('printBtn');
@@ -1186,16 +1194,16 @@
                     let filtered = shuffleArray(getFilteredData());
                     pendingPrintData = filtered.slice(0, state.selectedCount);
                     openPrintModal();
-                });
+                }, opt);
             }
             
             const theoryToggle = document.getElementById('theoryToggle');
             if (theoryToggle) {
-                theoryToggle.addEventListener('click', () => { state.showTheory = !state.showTheory; render(); });
+                theoryToggle.addEventListener('click', () => { state.showTheory = !state.showTheory; render(); }, opt);
             }
 
             document.querySelectorAll('[data-domi]').forEach(btn => {
-                btn.addEventListener('click', () => { state.selectedDomi = btn.dataset.domi; render(); });
+                btn.addEventListener('click', () => { state.selectedDomi = btn.dataset.domi; render(); }, opt);
             });
 
             document.querySelectorAll('[data-tropos]').forEach(btn => {
@@ -1206,7 +1214,7 @@
                     else if (state.selectedTropoi.length < 2) { state.selectedTropoi.push(tropos); }
                     else { state.selectedTropoi[1] = tropos; }
                     render();
-                });
+                }, opt);
             });
 
             const checkBtn = document.getElementById('checkBtn');
@@ -1218,7 +1226,7 @@
                     if (current.deytereyon && state.selectedTropoi[1] === current.deytereyon) state.score.tropiDeytereyon += 1;
                     state.showResult = true;
                     render();
-                });
+                }, opt);
             }
 
             const nextBtn = document.getElementById('nextBtn');
@@ -1231,7 +1239,7 @@
                         state.showResult = false;
                     } else { state.screen = 'results'; }
                     render();
-                });
+                }, opt);
             }
 
             const restartBtn = document.getElementById('restartBtn');
@@ -1246,7 +1254,7 @@
                     state.score = { domi: 0, tropiKyrios: 0, tropiDeytereyon: 0 };
                     state.screen = 'quiz';
                     render();
-                });
+                }, opt);
             }
             
             const newSelectionBtn = document.getElementById('newSelectionBtn');
@@ -1259,10 +1267,8 @@
                     state.showResult = false;
                     state.score = { domi: 0, tropiKyrios: 0, tropiDeytereyon: 0 };
                     render();
-                });
+                }, opt);
             }
-
-            // Modal listeners (always present)
         }
 
         // =====================================================
@@ -1278,6 +1284,8 @@
         }
 
         function attachModalListeners() {
+            if (modalListenersAttached) return;
+            modalListenersAttached = true;
             const overlay = document.getElementById('printModalOverlay');
             const closeBtn = document.getElementById('modalCloseBtn');
             const cancelBtn = document.getElementById('modalCancelBtn');
@@ -1500,7 +1508,6 @@
         // INIT
         // =====================================================
         loadData();
-        attachModalListeners();
         
         document.addEventListener('copy', function(e) {
             const selection = window.getSelection();
