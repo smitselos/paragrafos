@@ -828,22 +828,28 @@
         }
 
         async function loadData() {
-            const proxies = [
-                (u) => 'https://corsproxy.io/?' + encodeURIComponent(u),
-                (u) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
-                (u) => u
+            const urls = [
+                'https://corsproxy.io/?' + encodeURIComponent(GOOGLE_SHEET_CSV_URL),
+                'https://api.allorigins.win/raw?url=' + encodeURIComponent(GOOGLE_SHEET_CSV_URL),
+                GOOGLE_SHEET_CSV_URL
             ];
-            for (const getProxyUrl of proxies) {
-                try {
-                    const fetchUrl = getProxyUrl(GOOGLE_SHEET_CSV_URL);
-                    const response = await fetch(fetchUrl);
-                    if (!response.ok) continue;
-                    const csv = await response.text();
-                    if (!csv || csv.trim().startsWith('<!') || csv.trim().startsWith('<html')) continue;
-                    allData = parseCSV(csv);
-                    if (allData.length > 0) { state.screen = 'selection'; render(); return; }
-                } catch (e) { continue; }
+
+            async function tryFetch(url) {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('not ok');
+                const csv = await response.text();
+                if (!csv || csv.trim().startsWith('<!') || csv.trim().startsWith('<html')) throw new Error('bad response');
+                const data = parseCSV(csv);
+                if (data.length === 0) throw new Error('no data');
+                return data;
             }
+
+            try {
+                allData = await Promise.any(urls.map(url => tryFetch(url)));
+            } catch (e) {
+                allData = [];
+            }
+
             state.screen = 'selection';
             render();
         }
