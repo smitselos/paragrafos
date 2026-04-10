@@ -724,7 +724,7 @@
                             <option value="2.5">Πολύ αραιό (2.5)</option>
                         </select>
                     </div>
-                    <div>
+                    <div id="linesCountRow">
                         <label class="settings-label">Αριθμός γραμμών ανά παράγραφο</label>
                         <select class="settings-select" id="answerLinesCount">
                             <option value="1">1 γραμμή</option>
@@ -759,7 +759,6 @@
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
-                <p style="font-size:0.8rem; color:#64748b; margin-top:6px;">Ο αριθμός γραμμών ρυθμίζεται στη Μορφοποίηση παραπάνω.</p>
             </div>
 
             <div class="modal-actions">
@@ -851,33 +850,35 @@
         }
 
         async function loadData() {
-            const urls = [
+            const proxies = [
                 'https://corsproxy.io/?' + encodeURIComponent(GOOGLE_SHEET_CSV_URL),
                 'https://api.allorigins.win/raw?url=' + encodeURIComponent(GOOGLE_SHEET_CSV_URL),
                 GOOGLE_SHEET_CSV_URL
             ];
 
-            async function tryFetch(url) {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('not ok');
-                const csv = await response.text();
-                if (!csv || csv.trim().startsWith('<!') || csv.trim().startsWith('<html')) throw new Error('bad response');
-                const data = parseCSV(csv);
-                if (data.length === 0) throw new Error('no data');
-                return data;
+            function fetchWithTimeout(url, ms) {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), ms);
+                return fetch(url, { signal: controller.signal })
+                    .finally(() => clearTimeout(timer));
             }
 
-            try {
-                allData = await Promise.any(urls.map(url => tryFetch(url)));
-            } catch (e) {
-                allData = [];
+            for (const url of proxies) {
+                try {
+                    const response = await fetchWithTimeout(url, 5000);
+                    if (!response.ok) continue;
+                    const csv = await response.text();
+                    if (!csv || csv.trim().startsWith('<!') || csv.trim().startsWith('<html')) continue;
+                    const data = parseCSV(csv);
+                    if (data.length > 0) { allData = data; break; }
+                } catch (e) { continue; }
             }
 
             state.screen = 'selection';
             render();
         }
-        
-        function shuffleArray(array) {
+
+                function shuffleArray(array) {
             const newArray = [...array];
             for (let i = newArray.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -1433,6 +1434,10 @@
                             font-size: ${s.fontSize};
                             line-height: 1.5;
                             color: #000;
+                            padding: ${s.marginV} ${s.marginH};
+                        }
+                        @media print {
+                            body { padding: 0; }
                         }
 
                         /* Κεφαλίδα */
