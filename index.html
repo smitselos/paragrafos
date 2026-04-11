@@ -870,7 +870,7 @@
                     const csv = await response.text();
                     if (!csv || csv.trim().startsWith('<!') || csv.trim().startsWith('<html')) continue;
                     const data = parseCSV(csv);
-                    if (data.length > 0) { allData = data; break; }
+                    if (data.length >= 5) { allData = data; break; }
                 } catch (e) { continue; }
             }
 
@@ -878,7 +878,7 @@
             render();
         }
 
-                function shuffleArray(array) {
+        function shuffleArray(array) {
             const newArray = [...array];
             for (let i = newArray.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
