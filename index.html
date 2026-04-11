@@ -647,6 +647,40 @@
                         </label>
                     </div>
                 </div>
+                <div style="margin-top: 12px;">
+                    <label class="settings-label">Λογότυπο (URL εικόνας)</label>
+                    <input type="text" class="settings-input" id="logoUrl" placeholder="π.χ. https://... (URL εικόνας)">
+                </div>
+                <div class="settings-grid-3" style="margin-top: 10px;">
+                    <div>
+                        <label class="settings-label">Θέση</label>
+                        <select class="settings-select" id="logoAlign">
+                            <option value="left">Αριστερά</option>
+                            <option value="center">Κέντρο</option>
+                            <option value="right" selected>Δεξιά</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="settings-label">Πλάτος (px)</label>
+                        <select class="settings-select" id="logoWidth">
+                            <option value="40">40px</option>
+                            <option value="60">60px</option>
+                            <option value="80" selected>80px</option>
+                            <option value="100">100px</option>
+                            <option value="120">120px</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="settings-label">Ύψος (px)</label>
+                        <select class="settings-select" id="logoHeight">
+                            <option value="40">40px</option>
+                            <option value="60" selected>60px</option>
+                            <option value="80">80px</option>
+                            <option value="100">100px</option>
+                            <option value="auto">auto</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <!-- ΜΟΡΦΟΠΟΙΗΣΗ -->
@@ -1352,6 +1386,10 @@
                 className: document.getElementById('headerClass').value.trim(),
                 date: document.getElementById('headerDate').value.trim(),
                 showNameField: document.getElementById('showNameField').checked,
+                logoUrl: document.getElementById('logoUrl').value.trim(),
+                logoAlign: document.getElementById('logoAlign').value,
+                logoWidth: document.getElementById('logoWidth').value,
+                logoHeight: document.getElementById('logoHeight').value,
                 font: document.getElementById('printFont').value,
                 fontSize: document.getElementById('printFontSize').value,
                 marginV: document.getElementById('printMarginV').value,
@@ -1371,6 +1409,12 @@
             const printWindow = window.open('', '_blank');
 
             // Κεφαλίδα εγγράφου
+            // Λογότυπο
+            const logoHTML = s.logoUrl ? `
+                <div style="text-align:${s.logoAlign}; margin-bottom: 8px;">
+                    <img src="${s.logoUrl}" style="width:${s.logoWidth}px; height:${s.logoHeight === 'auto' ? 'auto' : s.logoHeight + 'px'}; object-fit:contain;" onerror="this.style.display='none'">
+                </div>` : '';
+
             const hasHeaderInfo = s.school || s.subject || s.className || s.date || s.showNameField;
             let headerHTML = '';
             if (hasHeaderInfo) {
@@ -1518,6 +1562,7 @@
                     </style>
                 </head>
                 <body>
+                    ${logoHTML}
                     ${headerHTML}
                     <div class="print-title">${s.title}</div>
                     ${s.instructions ? `<p class="print-instructions">${s.instructions}</p>` : ''}
