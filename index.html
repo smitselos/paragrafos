@@ -1400,22 +1400,21 @@
             const printWindow = window.open('', '_blank');
 
             // Κεφαλίδα εγγράφου
-            const logoHTML = s.logoUrl ? `
-                <div style="text-align:right; margin-bottom:6px;">
-                    <img src="${s.logoUrl}" style="width:${s.logoWidth}px; height:${s.logoHeight === 'auto' ? 'auto' : s.logoHeight + 'px'}; object-fit:contain;" onerror="this.style.display='none'">
-                </div>` : '';
-
             const hasHeaderInfo = s.school || s.subject || s.className || s.date || s.showNameField || s.logoUrl;
             let headerHTML = '';
             if (hasHeaderInfo) {
-                headerHTML += logoHTML;
+                const logoCell = s.logoUrl ? `
+                    <td rowspan="2" style="text-align:right; vertical-align:middle; padding-left:12px; width:${s.logoWidth}px;">
+                        <img src="${s.logoUrl}" style="width:${s.logoWidth}px; height:${s.logoHeight === 'auto' ? 'auto' : s.logoHeight + 'px'}; object-fit:contain;" onerror="this.style.display='none'">
+                    </td>` : '';
                 headerHTML += `<table class="header-table">`;
-                // Πρώτη γραμμή: σχολείο / μάθημα
+                // Πρώτη γραμμή: σχολείο / μάθημα / λογότυπο (rowspan=2)
                 headerHTML += `<tr>`;
                 if (s.school) headerHTML += `<td><strong>Σχολείο:</strong> ${s.school}</td>`;
                 else headerHTML += `<td></td>`;
                 if (s.subject) headerHTML += `<td><strong>Μάθημα:</strong> ${s.subject}</td>`;
                 else headerHTML += `<td></td>`;
+                headerHTML += logoCell;
                 headerHTML += `</tr>`;
                 // Δεύτερη γραμμή: όνομα / τμήμα / ημερομηνία
                 headerHTML += `<tr>`;
@@ -1551,7 +1550,6 @@
                     </style>
                 </head>
                 <body>
-                    ${logoHTML}
                     ${headerHTML}
                     <div class="print-title">${s.title}</div>
                     ${s.instructions ? `<p class="print-instructions">${s.instructions}</p>` : ''}
